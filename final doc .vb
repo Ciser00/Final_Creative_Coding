@@ -11,6 +11,9 @@ First steps
 Create the shapes I would use for the project 
 Basic shapes 
 Spheres 
+Long cubes 
+Triangles 
+All having set or completely random colors 
 
 More complex shapes 
 Devil fruit inspired shapes 
