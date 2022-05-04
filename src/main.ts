@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
-import { ShaderMaterial, Shading } from 'three';
+import { BoxGeometry, Color, MeshPhongMaterial, ShaderMaterial, Shading } from 'three';
 import { gsap } from "gsap";
 import * as dat from 'dat.gui';
 
@@ -12,12 +12,12 @@ let scene: THREE.Scene;
 let camera: THREE.PerspectiveCamera;
 let clock = new THREE.Clock();
 let timer = 0
-let obj_lst = [{}];
-let flat_cube_lst = [{}];
-let sphere_lst = [{}];
-let cylinder_lst = [{}];
-let cone_lst = [{}];
-let plane_lst = [{}]
+let obj_lst : Cube1[]= [];
+let flat_cube_lst : Cube1[] = [];
+let sphere_lst : Sphere1[] = [];
+let cylinder_lst : Cylinder1[]= [];
+let cone_lst : Cone1[] = [];
+let plane_lst : Plane1[] = []
 let cube_length = 2;
 var tl = gsap.timeline({autoRemoveChildren: true});
 let lightAmbient: THREE.AmbientLight;
@@ -39,32 +39,42 @@ import vertexShader from '../resources/shaders/shader.vert?raw';
 import fragmentShader from '../resources/shaders/shader.frag?raw';
 let shaderMat: ShaderMaterial;
 
+let colorsarray :Color[] = [ ];
+
 let controller = {
     render_distance : 50,
     left : 0,           //controll on what is being spawned
-    left_spawn_rate: 100,      //speed at the rate of spawn
+    left_spawn_rate: 75,      //speed at the rate of spawn
     left_delay: 1,      //delay between spawns ??
     left_counter: 1,    //counter for index 
     left_duration:10,   //durration of anamation 
-    left_reverse : true,
+    left_rotation :90,
+    left_position : 4,
+
     right :0,
     right_spawn_rate:75,
     right_delay:-3,
     right_counter:1,
     right_duration:10,
-    right_reverse: false,
+    right_rotation: 0,
+    right_position : 4,
+
+
     top : 0,
     top_spawn_rate: 75,
     top_delay:0,
     top_counter:1,
     top_duration:10,
-    top_reverse :false,
+    top_rotation : 0,
+    top_position : 2,
+
     bottom : 0,
     bottom_spawn_rate:75,
     bottom_delay:0,
     bottom_counter:1,
     bottom_duration :10,
-    bottom_reverse:false 
+    bottom_rotation : 0,
+    bottom_position: 2
 }
 
 class Movers {
@@ -81,8 +91,8 @@ class Movers {
 }
 
 class Cube1 extends Movers {    
-    geometryBox : any;
-    materialBox : any;
+    geometryBox : BoxGeometry;
+    materialBox : MeshPhongMaterial;
     width: number;
     height: number;
     depth : number;
@@ -92,7 +102,7 @@ class Cube1 extends Movers {
         this.height = height; 
         this.depth= depth;
         this.geometryBox = new THREE.BoxGeometry(this.width,this.height, this.depth);//random cube size length 
-        this.materialBox = new THREE.MeshPhongMaterial({ color: 0x456789 });
+        this.materialBox = new THREE.MeshPhongMaterial({ color: Math.random() * 0xffffff });
     }      
 }
 
@@ -102,8 +112,9 @@ class Sphere1 extends Movers{
     radius:number;
        constructor(xpos: number, ypos: number, zpos:number, rotation:number,radius:number){
         super(xpos, ypos, zpos, rotation);   
+    
         this.geometrySphere = new THREE.SphereGeometry();
-        this.materialSphere = new THREE.MeshPhongMaterial({ color: 0x710B0B });
+        this.materialSphere = new THREE.MeshPhongMaterial({ color: Math.random() * 0xffffff });
         this.radius = radius;
     }  
 }
@@ -122,7 +133,7 @@ class Cylinder1 extends Movers{
         this.height = height;
         this.radialSegments = radialSegments;
         this.geometryCylinder = new THREE.CylinderGeometry(this.radiusTop, this.radiusBot, this.height, this.radialSegments  );
-        this.materialCylinder = new THREE.MeshPhongMaterial({ color: 0x710B0B });
+        this.materialCylinder = new THREE.MeshPhongMaterial({ color: Math.random() * 0xffffff });
     }      
 }
 
@@ -138,7 +149,7 @@ class Cone1 extends Movers {
         this.height = height;
         this.radialSegments = radialSegments;
         this.geometryCone = new THREE.ConeGeometry(this.radius, this.height, this.radialSegments  );
-        this.materialCone = new THREE.MeshPhongMaterial({ color: 0x710B0B });
+        this.materialCone = new THREE.MeshPhongMaterial({ color: Math.random() * 0xffffff });
     }
 }
 
@@ -152,7 +163,7 @@ class Plane1 extends Movers{
         this.height = height;
         this.width = width;
         this.geometryPlane = new THREE.PlaneGeometry( this.height, this.width );
-        this.materialPlane = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+        this.materialPlane = new THREE.MeshBasicMaterial( {color: Math.random() * 0xffffff, side: THREE.DoubleSide} );
     }
 }
 
@@ -217,30 +228,49 @@ function initScene() {
     universal.add(controller,"render_distance",25,150,25)
 
 
+
     let left_gui = gui.addFolder("Left")
     left_gui.add(controller,"left",0,5,1)
     left_gui.add(controller,"left_spawn_rate",50,200,25)
     left_gui.add(controller,"left_duration",5,20)
+    left_gui.add(controller,"left_rotation",0,360,1)
+    left_gui.add(controller,"left_position",0,8,1)
+
+
 
     let right_gui = gui.addFolder("Right")
     right_gui.add(controller,"right",0,5,1)
     right_gui.add(controller,"right_spawn_rate",25,150,25)
     right_gui.add(controller,"right_duration",5,20)
+    right_gui.add(controller,"right_rotation",0,360,1)
+    right_gui.add(controller,"right_position",0,8,1)
+
+
 
 
     let top_gui = gui.addFolder("Top")
     top_gui.add(controller,"top",0,5,1)
     top_gui.add(controller,"top_spawn_rate",25,150,25)
     top_gui.add(controller,"top_duration",5,20)
+    top_gui.add(controller,"top_rotation",0,360,1)
+    top_gui.add(controller,"top_position",0,8,1)
+
 
 
     let bottom_gui = gui.addFolder("Bottom")
     bottom_gui.add(controller,"bottom",0,5,1)
     bottom_gui.add(controller,"bottom_spawn_rate",25,150,25)
     bottom_gui.add(controller,"bottom_duration",5,20)
+    bottom_gui.add(controller,"bottom_rotation",0,360,1)
+    bottom_gui.add(controller,"bottom_position",0,8,1)
 
 
-    
+    const geometry = new THREE.PlaneGeometry( 30, 30 );
+    const material = new THREE.MeshBasicMaterial( {color: 0x000000, side: THREE.DoubleSide} );
+    const plane = new THREE.Mesh( geometry, material );
+    plane.position.z = 10
+    scene.add( plane );
+
     
     for(let i=0; i < 7; i++){   //each cube will have a length 5 longer than the last one, 6 total 
         let temp = new Cube1(0,0,i-100,0,3,3,cube_length) // x,y,z,rotationg,legth,width,height   ///now i can create a whole bnch of diffrent types of cube objs, just have to know their index     
@@ -273,6 +303,7 @@ function initScene() {
 
     for(let i=0; i < 7; i++){       //xpos: number, ypos: number, zpos:number, rotation:number,radius : number,height : number, radialSegments : number
         let temp = new Cone1(0,0,i-100,2,2,2,20)   
+        
         cone_lst.push(temp); 
     }
 
@@ -356,20 +387,22 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-function placeCube(x: {}){
+function placeCube(x: Cube1, rotation:number){
     if (x.zpos < 10){
         cube = new THREE.Mesh(x.geometryBox, x.materialBox);
         cube.castShadow = true;
         cube.position.set(x.xpos,x.ypos,x.zpos);
         cube.scale.set(.5,.5,.5)
         cube.rotateY(x.rotation)
+        cube.rotateZ(rotation * (Math.PI/180))
+
         scene.add(cube);
     }
     else{
         scene.remove(cube)   //not working
     }
 }
-function placeSphere(x: {}){
+function placeSphere(x: Sphere1){
     sphere = new THREE.Mesh(x.geometrySphere, x.materialSphere);
     sphere.castShadow=true;
     sphere.position.set(x.xpos,x.ypos,x.zpos)
@@ -377,24 +410,26 @@ function placeSphere(x: {}){
     scene.add(sphere);
 }
 
-function placeCylinder(x:{}){
+function placeCylinder(x:Cylinder1, rotation:number){
     cylinder = new THREE.Mesh( x.geometryCylinder, x.materialCylinder );
     cylinder.position.set(x.xpos,x.ypos,x.zpos)
     cylinder.rotateX(1.5708)
-    cylinder.rotateZ(1.5708)
+    cylinder.rotateZ(rotation * (Math.PI/180))
 
     scene.add( cylinder ); 
 }
-function placeCone(x:{}){
+function placeCone(x:Cone1, rotation:number){
     cone = new THREE.Mesh( x.geometryCone, x.materialCone );
+    cone.rotateZ(rotation * (Math.PI/180))
     cone.position.set(x.xpos,x.ypos,x.zpos)
 
     scene.add( cone );
 } 
 
-function placePlane(x:{}){
+function placePlane(x:Plane1, rotation:number){
     plane = new THREE.Mesh( x.geometryPlane, x.materialPlane );
     plane.position.set(x.xpos,x.ypos,x.zpos)
+    plane.rotateZ(rotation * (Math.PI/180))
 
     scene.add( plane );
 }
@@ -404,8 +439,8 @@ function clear(){
 function leftControl(){
     switch (controller.left) {
         case 0:
-            placeCube(obj_lst[controller.left_counter])
-            gsap.fromTo(cube.position,{x:-4, z: -controller.render_distance},{x:-4,z:50,duration: controller.left_duration, onComplete: clear})
+            placeCube(obj_lst[controller.left_counter],controller.left_rotation)
+            gsap.fromTo(cube.position,{x:-(controller.left_position), z: -controller.render_distance},{x:-(controller.left_position),z:50,duration: controller.left_duration, onComplete: clear})
             if (controller.left_counter == obj_lst.length -1 ){
                 controller.left_counter = 1;
                 controller.render_distance * -1
@@ -416,7 +451,7 @@ function leftControl(){
             break;
         case 1:
             placeSphere(sphere_lst[controller.left_counter])
-            gsap.fromTo(sphere.position,{x:-4, z:-controller.render_distance},{x:-4,z:50,duration: controller.left_duration, onComplete: clear})
+            gsap.fromTo(sphere.position,{x:-(controller.left_position), z: -controller.render_distance},{x:-(controller.left_position),z:50,duration: controller.left_duration, onComplete: clear})
             if (controller.left_counter == sphere_lst.length -1 ){
                 controller.left_counter = 1;
             }else {
@@ -426,8 +461,8 @@ function leftControl(){
         default:
             break;
             case 2:  //could do dromto / tofrom for  a reverse mode 
-            placeCylinder(cylinder_lst[controller.left_counter])
-            gsap.fromTo(cylinder.position,{x:-4, z:-controller.render_distance},{x:-4,z:50,duration: controller.right_duration, onComplete: clear})   //customizable left and right spacing 
+            placeCylinder(cylinder_lst[controller.left_counter],controller.left_rotation)
+            gsap.fromTo(cylinder.position,{x:-(controller.left_position), z: -controller.render_distance},{x:-(controller.left_position),z:50,duration: controller.left_duration, onComplete: clear})   //customizable left and right spacing 
             if (controller.right_counter == cylinder_lst.length -1 ){
                 controller.right_counter = 1;
             }else {
@@ -436,8 +471,8 @@ function leftControl(){
             break;
         
         case 3:  //could do dromto / tofrom for  a reverse mode 
-            placeCone(cone_lst[controller.left_counter])
-            gsap.fromTo(cone.position,{x:-4, z:-controller.render_distance},{x:-4,z:50,duration: controller.right_duration, onComplete: clear})   //customizable left and right spacing 
+            placeCone(cone_lst[controller.left_counter],controller.left_rotation)
+            gsap.fromTo(cone.position,{x:-(controller.left_position), z: -controller.render_distance},{x:-(controller.left_position),z:50,duration: controller.left_duration, onComplete: clear})   //customizable left and right spacing 
             if (controller.right_counter == cone_lst.length -1 ){
                 controller.right_counter = 1;
             }else {
@@ -446,8 +481,8 @@ function leftControl(){
             break;
         
         case 4:  //could do dromto / tofrom for  a reverse mode 
-            placePlane(plane_lst[controller.right_counter])  
-            gsap.fromTo(plane.position,{x:-4, z:-controller.render_distance},{x:-4,z:50,duration: controller.right_duration, onComplete: clear})   //customizable left and right spacing 
+            placePlane(plane_lst[controller.right_counter],controller.left_rotation)  
+            gsap.fromTo(plane.position,{x:-(controller.left_position), z: -controller.render_distance},{x:-(controller.left_position),z:50,duration: controller.left_duration, onComplete: clear})   //customizable left and right spacing 
             if (controller.right_counter == sphere_lst.length -1 ){
                 controller.right_counter = 1;
             }else {
@@ -460,14 +495,11 @@ function leftControl(){
     }
    }
 
-
-
-
 function rightControl(){
     switch (controller.right) {
         case 0:   //customizable shape spawned 
-            placeCube(obj_lst[controller.right_counter])
-            gsap.fromTo(cube.position,{x:4, z:-controller.render_distance},{x:4,z:50,duration: controller.right_duration, onComplete: clear})   //customizable left and right spacing 
+            placeCube(obj_lst[controller.right_counter],controller.right_rotation)
+            gsap.fromTo(cube.position,{x:controller.right_position, z:-controller.render_distance},{x:controller.right_position,z:50,duration: controller.right_duration, onComplete: clear})   //customizable left and right spacing 
             if (controller.right_counter == obj_lst.length -1 ){
                 controller.right_counter = 1;
             }else {
@@ -477,7 +509,7 @@ function rightControl(){
         
         case 1:  //could do dromto / tofrom for  a reverse mode 
             placeSphere(sphere_lst[controller.right_counter])
-            gsap.fromTo(sphere.position,{x:4, z:-controller.render_distance},{x:4,z:50,duration: controller.right_duration, onComplete: clear})   //customizable left and right spacing 
+            gsap.fromTo(sphere.position,{x:controller.right_position, z:-controller.render_distance},{x:controller.right_position,z:50,duration: controller.right_duration, onComplete: clear})   //customizable left and right spacing 
             if (controller.right_counter == sphere_lst.length -1 ){
                 controller.right_counter = 1;
             }else {
@@ -486,8 +518,8 @@ function rightControl(){
             break;
         
         case 2:  //could do dromto / tofrom for  a reverse mode 
-            placeCylinder(cylinder_lst[controller.right_counter])
-            gsap.fromTo(cylinder.position,{x:4, z:-controller.render_distance},{x:4,z:50,duration: controller.right_duration, onComplete: clear})   //customizable left and right spacing 
+            placeCylinder(cylinder_lst[controller.right_counter],controller.right_rotation)
+            gsap.fromTo(cylinder.position,{x:controller.right_position, z:-controller.render_distance},{x:controller.right_position,z:50,duration: controller.right_duration, onComplete: clear})   //customizable left and right spacing 
             if (controller.right_counter == cylinder_lst.length -1 ){
                 controller.right_counter = 1;
             }else {
@@ -496,8 +528,8 @@ function rightControl(){
             break;
         
         case 3:  //could do dromto / tofrom for  a reverse mode 
-            placeCone(cone_lst[controller.right_counter])
-            gsap.fromTo(cone.position,{x:4, z:-controller.render_distance},{x:4,z:50,duration: controller.right_duration, onComplete: clear})   //customizable left and right spacing 
+            placeCone(cone_lst[controller.right_counter],controller.right_rotation)
+            gsap.fromTo(cone.position,{x:controller.right_position, z:-controller.render_distance},{x:controller.right_position,z:50,duration: controller.right_duration, onComplete: clear})   //customizable left and right spacing 
             if (controller.right_counter == cone_lst.length -1 ){
                 controller.right_counter = 1;
             }else {
@@ -506,8 +538,8 @@ function rightControl(){
             break;
         
         case 4:  //could do dromto / tofrom for  a reverse mode 
-            placePlane(plane_lst[controller.right_counter])  
-            gsap.fromTo(plane.position,{x:4, z:-controller.render_distance},{x:4,z:50,duration: controller.right_duration, onComplete: clear})   //customizable left and right spacing 
+            placePlane(plane_lst[controller.right_counter],controller.right_rotation)  
+            gsap.fromTo(plane.position,{x:controller.right_position, z:-controller.render_distance},{x:controller.right_position,z:50,duration: controller.right_duration, onComplete: clear})   //customizable left and right spacing 
             if (controller.right_counter == sphere_lst.length -1 ){
                 controller.right_counter = 1;
             }else {
@@ -526,8 +558,8 @@ function rightControl(){
 function topControl(){    
     switch (controller.top) {
         case 0:   //customizable shape spawned 
-            placeCube(flat_cube_lst[controller.top_counter])
-            gsap.fromTo(cube.position,{y:2, z:-controller.render_distance},{y:2,z:50,duration: controller.top_duration, onComplete: clear})   //customizable left and right spacing 
+            placeCube(flat_cube_lst[controller.top_counter],controller.top_rotation)
+            gsap.fromTo(cube.position,{y:controller.top_position, z:-controller.render_distance},{y:controller.top_position,z:50,duration: controller.top_duration, onComplete: clear})   //customizable left and right spacing 
             if (controller.top_counter == flat_cube_lst.length -1 ){
                 controller.top_counter = 1;
             }else {
@@ -537,7 +569,7 @@ function topControl(){
         
         case 1:  //could do dromto / tofrom for  a reverse mode 
             placeSphere(sphere_lst[controller.top_counter])
-            gsap.fromTo(sphere.position,{y:2, z:-controller.render_distance},{y:2,z:50,duration: controller.top_duration, onComplete: clear})   //customizable left and right spacing 
+            gsap.fromTo(sphere.position,{y:controller.top_position, z:-controller.render_distance},{y:controller.top_position,z:50,duration: controller.top_duration, onComplete: clear})   //customizable left and right spacing 
             if (controller.top_counter == sphere_lst.length -1 ){
                 controller.top_counter = 1;
             }else {
@@ -546,8 +578,8 @@ function topControl(){
             break;
         
         case 2:  //could do dromto / tofrom for  a reverse mode 
-            placeCylinder(cylinder_lst[controller.top_counter])
-            gsap.fromTo(cylinder.position,{y:2, z:-controller.render_distance},{y:2,z:50,duration: controller.top_duration, onComplete: clear})   //customizable left and right spacing 
+            placeCylinder(cylinder_lst[controller.top_counter],controller.top_rotation)
+            gsap.fromTo(cylinder.position,{y:controller.top_position, z:-controller.render_distance},{y:controller.top_position,z:50,duration: controller.top_duration, onComplete: clear})   //customizable left and right spacing 
             if (controller.top_counter == cylinder_lst.length -1 ){
                 controller.top_counter = 1;
             }else {
@@ -556,8 +588,8 @@ function topControl(){
             break;
         
         case 3:  //could do dromto / tofrom for  a reverse mode 
-            placeCone(cone_lst[controller.top_counter])
-            gsap.fromTo(cone.position,{y:2, z:-controller.render_distance},{y:2,z:50,duration: controller.top_duration, onComplete: clear})   //customizable left and right spacing 
+            placeCone(cone_lst[controller.top_counter],controller.top_rotation)
+            gsap.fromTo(cone.position,{y:controller.top_position, z:-controller.render_distance},{y:controller.top_position,z:50,duration: controller.top_duration, onComplete: clear})   //customizable left and right spacing 
             if (controller.top_counter == cone_lst.length -1 ){
                 controller.top_counter = 1;
             }else {
@@ -566,8 +598,8 @@ function topControl(){
             break;
         
         case 4:  //could do dromto / tofrom for  a reverse mode 
-            placePlane(plane_lst[controller.top_counter])  
-            gsap.fromTo(plane.position,{y:2, z:-controller.render_distance},{y:2,z:50,duration: controller.top_duration, onComplete: clear})   //customizable left and right spacing 
+            placePlane(plane_lst[controller.top_counter],controller.top_rotation)  
+            gsap.fromTo(plane.position,{y:controller.top_position, z:-controller.render_distance},{y:controller.top_position,z:50,duration: controller.top_duration, onComplete: clear})   //customizable left and right spacing 
             if (controller.top_counter == sphere_lst.length -1 ){
                 controller.top_counter = 1;
             }else {
@@ -586,8 +618,8 @@ function bottomControl(){
 
     switch (controller.bottom) {
         case 0:   //customizable shape spawned 
-            placeCube(flat_cube_lst[controller.bottom_counter])
-            gsap.fromTo(cube.position,{y:-2, z:-controller.render_distance},{y:-2,z:50,duration: controller.bottom_duration, onComplete: clear})   //customizable left and right spacing 
+            placeCube(flat_cube_lst[controller.bottom_counter],controller.bottom_rotation)
+            gsap.fromTo(cube.position,{y:-(controller.bottom_position), z:-controller.render_distance},{y:-(controller.bottom_position),z:50,duration: controller.bottom_duration, onComplete: clear})   //customizable left and right spacing 
             if (controller.bottom_counter == flat_cube_lst.length -1 ){
                 controller.bottom_counter = 1;
             }else {
@@ -597,7 +629,7 @@ function bottomControl(){
         
         case 1:  //could do dromto / tofrom for  a reverse mode 
             placeSphere(sphere_lst[controller.bottom_counter])
-            gsap.fromTo(sphere.position,{y:-2, z:-controller.render_distance},{y:-2,z:50,duration: controller.bottom_duration, onComplete: clear})   //customizable left and right spacing 
+            gsap.fromTo(sphere.position,{y:-(controller.bottom_position), z:-controller.render_distance},{y:-(controller.bottom_position),z:50,duration: controller.bottom_duration, onComplete: clear})   //customizable left and right spacing 
             if (controller.bottom_counter == sphere_lst.length -1 ){
                 controller.bottom_counter = 1;
             }else {
@@ -606,8 +638,8 @@ function bottomControl(){
             break;
         
         case 2:  //could do dromto / tofrom for  a reverse mode 
-            placeCylinder(cylinder_lst[controller.bottom_counter])
-            gsap.fromTo(cylinder.position,{y:-2, z:-controller.render_distance},{y:-2,z:50,duration: controller.bottom_duration, onComplete: clear})   //customizable left and right spacing 
+            placeCylinder(cylinder_lst[controller.bottom_counter],controller.bottom_rotation)
+            gsap.fromTo(cylinder.position,{y:-(controller.bottom_position), z:-controller.render_distance},{y:-(controller.bottom_position),z:50,duration: controller.bottom_duration, onComplete: clear})   //customizable left and right spacing 
             if (controller.bottom_counter == cylinder_lst.length -1 ){
                 controller.bottom_counter = 1;
             }else {
@@ -616,8 +648,8 @@ function bottomControl(){
             break;
         
         case 3:  //could do dromto / tofrom for  a reverse mode 
-            placeCone(cone_lst[controller.bottom_counter])
-            gsap.fromTo(cone.position,{y:-2, z:-controller.render_distance},{y:-2,z:50,duration: controller.bottom_duration, onComplete: clear})   //customizable left and right spacing 
+            placeCone(cone_lst[controller.bottom_counter],controller.bottom_rotation)
+            gsap.fromTo(cone.position,{y:--(controller.bottom_position), z:-controller.render_distance},{y:-(controller.bottom_position),z:50,duration: controller.bottom_duration, onComplete: clear})   //customizable left and right spacing 
             if (controller.bottom_counter == cone_lst.length -1 ){
                 controller.bottom_counter = 1;
             }else {
@@ -626,8 +658,8 @@ function bottomControl(){
             break;
         
         case 4:  //could do dromto / tofrom for  a reverse mode 
-            placePlane(plane_lst[controller.bottom_counter])  
-            gsap.fromTo(plane.position,{y:-2, z:-controller.render_distance},{y:-2,z:50,duration: controller.bottom_duration, onComplete: clear})   //customizable left and right spacing 
+            placePlane(plane_lst[controller.bottom_counter],controller.bottom_rotation)  
+            gsap.fromTo(plane.position,{y:-(controller.bottom_position), z:-controller.render_distance},{y:-(controller.bottom_position),z:50,duration: controller.bottom_duration, onComplete: clear})   //customizable left and right spacing 
             if (controller.bottom_counter == sphere_lst.length -1 ){
                 controller.bottom_counter = 1;
             }else {
@@ -641,19 +673,8 @@ function bottomControl(){
             break;
     }
 }
-function placeTest(){
-    placeCube(obj_lst[0])
-    placeCube(obj_lst[1])
-    placeCube(obj_lst[2])
-    placeCube(obj_lst[3])
-    placeCube(obj_lst[4])
-    placeCube(obj_lst[5])
 
-}
 main()
-//randomize colors when creating shapes 
-//add more shapes ?
-
 
 //custmoizable features added 
     // -through gui 
