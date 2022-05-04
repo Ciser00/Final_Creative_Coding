@@ -463,30 +463,30 @@ function leftControl(){
             case 2:  //could do dromto / tofrom for  a reverse mode 
             placeCylinder(cylinder_lst[controller.left_counter],controller.left_rotation)
             gsap.fromTo(cylinder.position,{x:-(controller.left_position), z: -controller.render_distance},{x:-(controller.left_position),z:50,duration: controller.left_duration, onComplete: clear})   //customizable left and right spacing 
-            if (controller.right_counter == cylinder_lst.length -1 ){
-                controller.right_counter = 1;
+            if (controller.left_counter == cylinder_lst.length -1 ){
+                controller.left_counter = 1;
             }else {
-                controller.right_counter+=1;
+                controller.left_counter+=1;
             } 
             break;
         
         case 3:  //could do dromto / tofrom for  a reverse mode 
             placeCone(cone_lst[controller.left_counter],controller.left_rotation)
             gsap.fromTo(cone.position,{x:-(controller.left_position), z: -controller.render_distance},{x:-(controller.left_position),z:50,duration: controller.left_duration, onComplete: clear})   //customizable left and right spacing 
-            if (controller.right_counter == cone_lst.length -1 ){
-                controller.right_counter = 1;
+            if (controller.left_counter == cone_lst.length -1 ){
+                controller.left_counter = 1;
             }else {
-                controller.right_counter+=1;
+                controller.left_counter+=1;
             } 
             break;
         
         case 4:  //could do dromto / tofrom for  a reverse mode 
-            placePlane(plane_lst[controller.right_counter],controller.left_rotation)  
+            placePlane(plane_lst[controller.left_counter],controller.left_rotation)  
             gsap.fromTo(plane.position,{x:-(controller.left_position), z: -controller.render_distance},{x:-(controller.left_position),z:50,duration: controller.left_duration, onComplete: clear})   //customizable left and right spacing 
-            if (controller.right_counter == sphere_lst.length -1 ){
-                controller.right_counter = 1;
+            if (controller.left_counter == sphere_lst.length -1 ){
+                controller.left_counter = 1;
             }else {
-                controller.right_counter+=1;
+                controller.left_counter+=1;
             } 
             break;
         case 5: 
