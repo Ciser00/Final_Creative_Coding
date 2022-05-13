@@ -15,13 +15,6 @@ Long cubes
 Triangles 
 All having set or completely random colors 
 
-More complex shapes 
-Devil fruit inspired shapes 
-3d models of them might exist
-Random objects that have a similar feel
-Real fruits 
-
-
 
 Next steps 
 Creating the procedure in which the shapes and models are displayed 
